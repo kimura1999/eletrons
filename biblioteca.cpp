@@ -15,11 +15,11 @@ struct book{
     int ano;
     
     struct data{
-        int dia;
+        int dia = 0; // verificar se foi emprestado
         int mes;
         int ano;
         
-        int dia_dev;
+        int dia_dev; // 7 dias depois
         int mes_dev;
         int ano_dev;
     } data;
@@ -41,19 +41,19 @@ void menuEmprestimo(user* usuarios_cadastrados, int &qtd_usuarios);
 
 //funcoes do menu usuarios
 void cadastrar_usuario(user* usuarios_cadastrados);
-void excluir_usuario(user* usuarios_cadastrados);
+void excluir_usuario(user* usuarios_cadastrados, int &qtd_usuarios);
 void listar_usuarios(user* usuarios_cadastrados, int qtd_usuarios);
 void bubble_sortUSUARIO(user* v, int n);
 
 // funcoes do menu livros
 void cadastrar_livro(book* livros_cadastrados);
-void excluir_livro(book* livros_cadastrados);
+void excluir_livro(book* livros_cadastrados, int &qtd_livros);
 void listar_livros(book* livros_cadastrados, int qtd_livros);
 void bubble_sortLIVRO(book* v, int n);
 
 // funcoes do menu Emprestimo
 void emprestar_livro(user* usuarios_cadastrados, book* livros_cadastrados);
-void devolver_livro(user* usuarios_cadastrados);
+void devolver_livro(user* usuarios_cadastrados, book* livros_cadastrados);
 // listar_emprestimos
 // bubble_sortUSUARIO
 
@@ -115,7 +115,7 @@ void menuEmprestimo(user* usuarios_cadastrados, book* livros_cadastrados){
         case 1:   emprestar_livro(usuarios_cadastrados, livros_cadastrados);
                   break;
 
-        case 2:   devolver_livro(usuarios_cadastrados);
+        case 2:   devolver_livro(usuarios_cadastrados, livros_cadastrados);
                   break;
 
         case 3: 
@@ -144,12 +144,19 @@ void menuCadastroLivro(book* livros_cadastrados, int &qtd_livros){
 
     switch(option){
 
-        case 1:   cadastrar_livro(livros_cadastrados);
+        case 1:   if(qtd_livros != 100){
+                  cadastrar_livro(livros_cadastrados);
                   qtd_livros++;
+                  }
+                  else puts("\nERRO: Limite de livros atingido!\n");
+                  
                   break;
 
-        case 2:   excluir_livro(livros_cadastrados);
-                  qtd_livros--;
+        case 2:   if(qtd_livros != 0){
+                  excluir_livro(livros_cadastrados, qtd_livros);
+                  }
+                  else puts("\nERRO: Nao há livros cadastrados!\n");
+                  
                   break;
 
         case 3:   listar_livros(livros_cadastrados, qtd_livros);
@@ -179,12 +186,19 @@ void menuCadastroUsuario(user* usuarios_cadastrados, int &qtd_usuarios){
 
     switch(option){
 
-        case 1:   cadastrar_usuario(usuarios_cadastrados);
+        case 1:   if(qtd_usuarios != 100){
+                  cadastrar_usuario(usuarios_cadastrados);
                   qtd_usuarios++;
+                  }
+                  else puts("\nERRO: Limite de usuarios atingido!\n");
+                  
                   break;
 
-        case 2:   excluir_usuario(usuarios_cadastrados);
-                  qtd_usuarios--;
+        case 2:   if(qtd_usuarios != 0){
+                  excluir_usuario(usuarios_cadastrados, qtd_usuarios);
+                  }
+                  else puts("\nERRO: Nao há usuarios cadastrados!\n");
+                  
                   break;
 
         case 3: listar_usuarios(usuarios_cadastrados, qtd_usuarios);
@@ -334,19 +348,28 @@ void cadastrar_usuario(user* usuarios_cadastrados)
     
 }
 
-void excluir_usuario(user* usuarios_cadastrados) // caso faltando: emprestimo
+void excluir_usuario(user* usuarios_cadastrados, int &qtd_usuarios) 
 {
     long long cpf_excluir = ler_CPF_EXCLUIR(cpf_excluir, usuarios_cadastrados);
     
     for(int i = 0; i < 100; i++)
+    {
+        if(usuarios_cadastrados[i].CPF == cpf_excluir && usuarios_cadastrados[i].emprestado.codigo != 0)
+        {
+            printf("\n\nErro: usuário possui um empréstimo!");
+            break;
+        }
+        
         if(usuarios_cadastrados[i].CPF == cpf_excluir)
         {
             usuarios_cadastrados[i].CPF = 0;
+            printf("\n\nExclusão realizada com sucesso!");
+            qtd_usuarios--;
             break;
         }
             
-            
-    printf("\n\nExclusão realizada com sucesso!");
+    }        
+    
 }
 
 
@@ -502,19 +525,29 @@ void cadastrar_livro(book* livros_cadastrados)
     
 }
 
-void excluir_livro(book* livros_cadastrados)
+void excluir_livro(book* livros_cadastrados, int &qtd_livros)
 {
     long codigo_excluir = ler_codigoEXCLUIR(codigo_excluir, livros_cadastrados);
     
     for(int i = 0; i < 100; i++)
+    {
+    
+        if(livros_cadastrados[i].codigo == codigo_excluir && livros_cadastrados[i].data.dia != 0)
+        {
+            puts("\nErro: livro está emprestado!\n");
+            break;
+        }
+        
         if(livros_cadastrados[i].codigo == codigo_excluir)
         {
             livros_cadastrados[i].codigo = 0;
+            printf("\nExclusão realizada com sucesso!\n");
+            qtd_livros--;
             break;
         }
             
-            
-    printf("\n\nExclusão realizada com sucesso!");
+    }       
+    
 }
 
 
@@ -669,7 +702,7 @@ void qtd_dias_atraso(int ano_devolvido, int mes_devolvido, int dia_devolvido, in
     int dias_mes[] = {31, bissexto(ano_dev) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 int dias_atraso = 0;
-for (dias_atraso;ano_devolvido != ano_dev && mes_devolvido != mes_dev && dia_devolvido != dia_dev ; dias_atraso++)
+for (dias_atraso;; dias_atraso++)
     {
         dia_dev++;
         
@@ -680,13 +713,19 @@ for (dias_atraso;ano_devolvido != ano_dev && mes_devolvido != mes_dev && dia_dev
             if(mes_dev > 12)
                 mes_dev = 1, ano_dev++;
         }
+        
+        if(ano_devolvido == ano_dev && mes_devolvido == mes_dev && dia_devolvido == dia_dev)
+        {
+            dias_atraso++; cout << "dias_atraso: " << dias_atraso;
+            break;
+        }
     }
     
     printf("Devolução realizada com atraso de %d dias!\n", dias_atraso);
 }
 
 
-void devolver_livro(user* usuarios_cadastrados)
+void devolver_livro(user* usuarios_cadastrados, book* livros_cadastrados)
 {
     long long cpf = ler_CPF_EXCLUIR(cpf, usuarios_cadastrados);
     
@@ -700,6 +739,11 @@ void devolver_livro(user* usuarios_cadastrados)
     for(i; i < 100; i++)
         if(usuarios_cadastrados[i].CPF == cpf)
             break;
+            
+    int j = 0; // localizar livro
+    for(j; j < 100; j++)
+        if(livros_cadastrados[j].codigo == usuarios_cadastrados[i].emprestado.codigo)
+            break;
     
     printf("\n\nNome: %-30s", usuarios_cadastrados[i].nome_do_usuario);
     printf("\nTitulo: %-30s\n\n", usuarios_cadastrados[i].emprestado.titulo);
@@ -709,6 +753,10 @@ void devolver_livro(user* usuarios_cadastrados)
     int dia_dev = usuarios_cadastrados[i].emprestado.data.dia_dev;
     
     usuarios_cadastrados[i].emprestado.codigo = 0;
+    livros_cadastrados[j].data.dia = 0;
+    
+    
+    
     
     if(!data_maior(ano_devolvido, mes_devolvido, dia_devolvido, ano_dev, mes_dev, dia_dev))
                 puts("Devolução realizada com sucesso no prazo!");
